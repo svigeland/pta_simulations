@@ -256,21 +256,21 @@ if __name__ == '__main__':
     
     parser = argparse.ArgumentParser(description='Continuous Gravitational Wave Search via Enterprise')
 
-    parser.add_argument('--freq', help='GW frequency for search', default=1e-8)
-    parser.add_argument('--hmin', help='Minimum GW strain', default=1e-17)
-    parser.add_argument('--hmax', help='Maximum GW strain', default=1e-12)
-    parser.add_argument('--htol', help='Fractional error in GW strain', default=0.1)
-    parser.add_argument('--det_prob', help='Detection probability', default=0.95)
+    parser.add_argument('--freq', help='GW frequency for search (DEFAULT: 1e-8)', default=1e-8)
+    parser.add_argument('--hmin', help='Minimum GW strain (DEFAULT: 1e-17)', default=1e-17)
+    parser.add_argument('--hmax', help='Maximum GW strain (DEFAULT: 1e-12)', default=1e-12)
+    parser.add_argument('--htol', help='Fractional error in GW strain (DEFAULT: 0.1)', default=0.1)
+    parser.add_argument('--nreal', help='Number of realizations', default=100)
+    parser.add_argument('--det_prob', help='Detection probability (DEFAULT: 0.95)', default=0.95)
+    parser.add_argument('--fap', help='False alarm probability (DEFAULT: 1e-4)', default=1e-4)
     parser.add_argument('--datadir', help='Directory of the par and tim files',
                         default='../data/partim/')
     parser.add_argument('--endtime', help='Observation end date [MJD]',
-                        default=57000)
+                        default=None)
     parser.add_argument('--psrlist', help='List of pulsars to use',
                         default=None)
-    parser.add_argument('--nreal', help='Number of realizations', default=100)
-    parser.add_argument('--fap', help='False alarm probability', default=1e-4)
     parser.add_argument('--outdir', help='Directory to put the detection curve files', 
-                        default='/home/sarah.vigeland/cw_sims/det_curve/')
+                        default='det_curve/')
 
     args = parser.parse_args()
     
@@ -281,6 +281,12 @@ if __name__ == '__main__':
     fap = float(args.fap)
     det_prob = float(args.det_prob)
     datadir = args.datadir
+
+    if not os.path.exists(args.outdir):
+        try:
+            os.makedirs(args.outdir)
+        except OSError:
+            pass
 
     outfile = '{0}/{1}.txt'.format(args.outdir, args.freq)
     

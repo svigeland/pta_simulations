@@ -15,7 +15,6 @@ from enterprise.signals import signal_base
 from enterprise.signals import white_signals
 from enterprise.signals import gp_signals
 import enterprise.constants as const
-from enterprise.signals import utils
 
 from enterprise_extensions import models
 from enterprise_extensions import model_utils

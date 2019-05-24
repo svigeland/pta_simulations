@@ -158,22 +158,35 @@ def compute_det_prob(fgw, h, nreal, fap,
                      datadir, endtime=None, psrlist=None):
 
     count = 0
+    detect = 0
     
-    for ii in range(nreal):
+    for _ in range(nreal):
 
-        psrs = make_sim(datadir, fgw, h, endtime=endtime, psrlist=psrlist)
-        setpars = {}
-        for psr in psrs:
-            setpars.update({'{0}_efac'.format(psr.name): 1.0})
-
-        pta = initialize_pta_sim(psrs, fgw)
-        fp = F_statistic.FpStat(psrs, params=setpars, pta=pta)
-        fap0 = fp.compute_fap(fgw)
+        try:
+            psrs = make_sim(datadir, fgw, h, endtime=endtime, psrlist=psrlist)
+        except:
+            psrs = []
         
-        if fap0 < fap:
-            count += 1
+        if len(psrs) > 0:
             
-    return count/nreal
+            setpars = {}
+            for psr in psrs:
+                setpars.update({'{0}_efac'.format(psr.name): 1.0})
+
+            pta = initialize_pta_sim(psrs, fgw)
+            fp = F_statistic.FpStat(psrs, params=setpars, pta=pta)
+            fap0 = fp.compute_fap(fgw)
+
+            count += 1
+
+            if fap0 < fap:
+                detect += 1
+
+    if count == 0:
+        print('ERROR: No simulated data sets were generated!')
+        return np.inf
+    else:
+        return detect/count
 
 
 # uses Brent's method to estimate the root

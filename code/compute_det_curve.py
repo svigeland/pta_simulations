@@ -148,6 +148,11 @@ if __name__ == '__main__':
             f.flush()
 
         # initially perform a bisection search
+        if b is None:
+            
+            print('Performing bisection search...')
+            sys.stdout.flush()
+
         while b is None:
     
             x = 10**((np.log10(a) + np.log10(c))/2)
@@ -157,14 +162,27 @@ if __name__ == '__main__':
         
             f.write('{0:.2e}  {1:>6.3f}\n'.format(x, fx))
             f.flush()
-    
-            if np.abs(fx - fa) < 1/nreal and np.sign(fa) == np.sign(fx):
-                a, fa = x, fx
-            elif np.abs(fx - fc) < 1/nreal and np.sign(fc) == np.sign(fx):
-                c, fc = x, fx
+            
+            if np.abs(np.log10(a) - np.log10(c)) > 1:
+            
+                if np.sign(fa) == np.sign(fx):
+                    a, fa = x, fx
+                else:
+                    b, fb = x, fx
+            
             else:
-                b, fb = x, fx
+    
+                if np.abs(fx - fa) < 1/nreal and np.sign(fa) == np.sign(fx):
+                    a, fa = x, fx
+                elif np.abs(fx - fc) < 1/nreal and np.sign(fc) == np.sign(fx):
+                    c, fc = x, fx
+                else:
+                    b, fb = x, fx
 
+        print('Switching to Brent\'s method...')
+        print('Values are a = {0:.2e}, b = {1:.2e}, c = {2:.2e}'.format(a, b, c))
+        sys.stdout.flush()
+        
         # use Brent's root finding algorithm to estimate the value of the root
         x = cw_sims.compute_x(a, fa, b, fb, c, fc)
 

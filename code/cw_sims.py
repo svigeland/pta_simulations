@@ -158,15 +158,15 @@ def compute_det_prob(fgw, h, nreal, fap,
                      datadir, endtime=None, psrlist=None):
 
     count = 0
+    
     for ii in range(nreal):
 
         psrs = make_sim(datadir, fgw, h, endtime=endtime, psrlist=psrlist)
-        pta = initialize_pta_sim(psrs, fgw)
-        
         setpars = {}
         for psr in psrs:
             setpars.update({'{0}_efac'.format(psr.name): 1.0})
-            
+
+        pta = initialize_pta_sim(psrs, fgw)
         fp = F_statistic.FpStat(psrs, params=setpars, pta=pta)
         fap0 = fp.compute_fap(fgw)
         

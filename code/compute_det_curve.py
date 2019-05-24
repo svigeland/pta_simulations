@@ -18,6 +18,10 @@ def load_outfile(outfile, hmin, hmax):
     # what if there is just one line of data?
 
     data = np.loadtxt(outfile)
+    
+    if len(data.shape) == 1:
+        data = np.array([data])
+    
     det_probs = np.unique(data[:,1])
     
     if len(det_probs) == 1:

@@ -5,6 +5,8 @@ import numpy as np
 import glob
 import os
 import sys
+import time
+import logging
 
 import libstempo as T2
 import libstempo.toasim as LT
@@ -20,7 +22,6 @@ from enterprise_extensions import models
 from enterprise_extensions import model_utils
 from enterprise_extensions.frequentist import F_statistic
 
-import logging
 logging.getLogger().setLevel(logging.ERROR)
 
 
@@ -159,6 +160,7 @@ def compute_det_prob(fgw, h, nreal, fap,
 
     count = 0
     detect = 0
+    t0 = time.time()
     
     for _ in range(nreal):
 
@@ -186,6 +188,7 @@ def compute_det_prob(fgw, h, nreal, fap,
         print('ERROR: No simulated data sets were generated!')
         return np.inf
     else:
+        print('Computed {0} realizations in {1} s'.format(count, time.time() - t0))
         return detect/count
 
 

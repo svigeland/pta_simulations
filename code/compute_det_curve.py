@@ -148,12 +148,10 @@ if __name__ == '__main__':
             f.flush()
 
         # initially perform a bisection search
-        if b is None:
+        while b is None and (c-a) > float(args.htol)*a:
             
             print('Performing bisection search...')
             sys.stdout.flush()
-
-        while b is None:
     
             x = 10**((np.log10(a) + np.log10(c))/2)
     
@@ -179,37 +177,41 @@ if __name__ == '__main__':
                 else:
                     b, fb = x, fx
 
-        print('Switching to Brent\'s method...')
-        print('Values are a = {0:.2e}, b = {1:.2e}, c = {2:.2e}'.format(a, b, c))
-        sys.stdout.flush()
-        
-        # use Brent's root finding algorithm to estimate the value of the root
-        x = cw_sims.compute_x(a, fa, b, fb, c, fc)
+        if b is not None:
 
-        while np.abs(x-b) > float(args.htol)*b:
+            print('Switching to Brent\'s method...')
+            print('Values are a = {0:.2e}, b = {1:.2e}, c = {2:.2e}'.format(a, b, c))
+            sys.stdout.flush()
+        
+            # use Brent's root finding algorithm to estimate the value of the root
+            x = cw_sims.compute_x(a, fa, b, fb, c, fc)
+
+            while np.abs(x-b) > float(args.htol)*b:
     
+                fx = cw_sims.compute_det_prob(fgw, x, nreal, fap,
+                                              datadir, endtime=endtime, psrlist=psrlist) - det_prob
+                f.write('{0:.2e}  {1:>6.3f}\n'.format(x, fx))
+                f.flush()
+        
+                # if fx is very close to fa, fb, or fc, simply replace that point
+                if np.abs(fx - fa) < 1/nreal:
+                    a, fa = x, fx
+                elif np.abs(fx - fb) < 1/nreal:
+                    b, fb = x, fx
+                elif np.abs(fx - fc) < 1/nreal:
+                    c, fc = x, fx
+                else:
+                    if np.sign(fx) == np.sign(fc):
+                        c, fc = x, fx
+                    else:
+                        a, fa = b, fb
+                        b, fb = x, fx
+        
+                x = cw_sims.compute_x(a, fa, b, fb, c, fc)
+            
             fx = cw_sims.compute_det_prob(fgw, x, nreal, fap,
                                           datadir, endtime=endtime, psrlist=psrlist) - det_prob
             f.write('{0:.2e}  {1:>6.3f}\n'.format(x, fx))
             f.flush()
-        
-            # if fx is very close to fa, fb, or fc, simply replace that point
-            if np.abs(fx - fa) < 1/nreal:    
-                a, fa = x, fx
-            elif np.abs(fx - fb) < 1/nreal:
-                b, fb = x, fx
-            elif np.abs(fx - fc) < 1/nreal:
-                c, fc = x, fx
-            else:
-                if np.sign(fx) == np.sign(fc):
-                    c, fc = x, fx            
-                else:
-                    a, fa = b, fb
-                    b, fb = x, fx
-        
-            x = cw_sims.compute_x(a, fa, b, fb, c, fc)
-            
-        fx = cw_sims.compute_det_prob(fgw, x, nreal, fap,
-                                      datadir, endtime=endtime, psrlist=psrlist) - det_prob
-        f.write('{0:.2e}  {1:>6.3f}\n'.format(x, fx))
-        f.flush()
+
+        print('Search complete.')

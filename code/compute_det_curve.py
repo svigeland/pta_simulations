@@ -133,6 +133,9 @@ if __name__ == '__main__':
         fa, fc = None, None
         b = None
 
+        print('Searching over the interval [{0:.1e}, {1:.1e}]...'.format(a, c))
+        sys.stdout.flush()
+
     with open(outfile, 'a') as f:
     
         if fa is None:

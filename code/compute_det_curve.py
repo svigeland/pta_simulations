@@ -169,7 +169,7 @@ if __name__ == '__main__':
                 if np.sign(fa) == np.sign(fx):
                     a, fa = x, fx
                 else:
-                    b, fb = x, fx
+                    c, fc = x, fx
             
             else:
     

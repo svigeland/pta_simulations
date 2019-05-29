@@ -13,6 +13,15 @@ logging.getLogger().setLevel(logging.ERROR)
 
 
 def load_outfile(outfile, hmin, hmax):
+    """
+    Utility function that loads in the results from a previous calculation.
+    Previous strain amplitudes and detection probabilities are loaded
+    and used to define the minimum and maximum strain amplitudes for the search
+    
+    :param outfile: Name of output file
+    :param hmin: Minimum value of strain amplitude
+    :param hmax: Maximum value of strain amplitude
+    """
 
     data = np.loadtxt(outfile)
     
@@ -20,9 +29,14 @@ def load_outfile(outfile, hmin, hmax):
         data = np.array([data])
     
     det_probs = np.unique(data[:,1])
-    
+
     if len(det_probs) == 1:
         
+        # if there is only one unique value of the detection probability,
+        # use that value and the corresponding strain amplitude
+        # to define one side of the bracket
+        # initialize the other side of the bracket to the default value
+
         if np.unique(data[:,1])[0] < 0:
             
             c, fc = hmax, None
@@ -48,6 +62,10 @@ def load_outfile(outfile, hmin, hmax):
                 c, fc = data[int(idx)]
             
     else:
+        
+        # if there is more than one unique value of the detection probability,
+        # find the values of the detection probability that are closest to zero
+        # and use the corresponding strain amplitudes to define the bracket
 
         idx = np.where(data[:,1] < 0)[0]
         if len(idx) > 1:

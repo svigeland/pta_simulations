@@ -188,8 +188,7 @@ if __name__ == '__main__':
             print('Performing bisection search...')
             sys.stdout.flush()
     
-            x = 10**((np.log10(a) + np.log10(c))/2)
-    
+            x = 10**((np.log10(a) + np.log10(c))/2)    
             fx = cw_sims.compute_det_prob(fgw, x, nreal, fap,
                                           datadir, endtime=endtime, psrlist=psrlist) - det_prob
         

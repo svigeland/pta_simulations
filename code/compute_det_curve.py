@@ -188,7 +188,7 @@ if __name__ == '__main__':
             print('Performing bisection search...')
             sys.stdout.flush()
     
-            x = 10**((np.log10(a) + np.log10(c))/2)    
+            x = 10**((np.log10(a) + np.log10(c))/2)
             fx = cw_sims.compute_det_prob(fgw, x, nreal, fap,
                                           datadir, endtime=endtime, psrlist=psrlist) - det_prob
         
@@ -204,6 +204,7 @@ if __name__ == '__main__':
             else:
                 b, fb = x, fx
 
+        # now use Brent's method
         if b is not None and iter < max_iter:
 
             print('Switching to Brent\'s method...')
@@ -221,19 +222,36 @@ if __name__ == '__main__':
                 f.flush()
                 iter += 1
         
-                # if fx is very close to fa, fb, or fc, simply replace that point
-                if np.abs(fx - fa) < 1/nreal:
+                # if fx is very close to fa, fb, or fc, replace that point with the new point
+                if isclose(fx, fa, 1/nreal):
                     a, fa = x, fx
-                elif np.abs(fx - fb) < 1/nreal:
+                elif isclose(fx, fb, 1/nreal):
                     b, fb = x, fx
-                elif np.abs(fx - fc) < 1/nreal:
+                elif isclose(fx, fc, 1/nreal):
                     c, fc = x, fx
                 else:
-                    if np.sign(fx) == np.sign(fc):
-                        c, fc = x, fx
+                    # otherwise reorder a, b, and c
+                    # this section relies on the fact that the detection probability
+                    # should be a monotonically increasing function, but may not be
+                    # due to the finite number of realizations
+                    if np.sign(fb) == np.sign(fa):
+                        if np.sign(fx) == np.sign(fc):
+                            c, fc = x, fx
+                        else:
+                            if fx > fb:
+                                a, fa = b, fb
+                                b, fb = x, fx
+                            elif fx > fa:
+                                b, fb = x, fx
                     else:
-                        a, fa = b, fb
-                        b, fb = x, fx
+                        if np.sign(fx) == np.sign(fa):
+                            a, fa = x, fx
+                        else:
+                            if fx < fb:
+                                c, fc = b, fb
+                                b, fb = x, fx
+                            elif fx < fc:
+                                b, fb = x, fx
         
                 x = cw_sims.compute_x(a, fa, b, fb, c, fc)
             

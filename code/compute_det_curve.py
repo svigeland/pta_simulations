@@ -23,8 +23,6 @@ def load_outfile(outfile, hmin, hmax):
     
     if len(det_probs) == 1:
         
-        b, fb = None, None
-        
         if np.unique(data[:,1])[0] < 0:
             
             c, fc = hmax, None
@@ -51,8 +49,6 @@ def load_outfile(outfile, hmin, hmax):
             
     else:
 
-        b, fb = None, None
-
         idx = np.where(data[:,1] < 0)[0]
         if len(idx) > 1:
             data2 = data[idx]
@@ -71,7 +67,7 @@ def load_outfile(outfile, hmin, hmax):
             
     print('Initializing from file with a = {0:.2e}, c = {1:.2e}'.format(a, c))
 
-    return a, fa, b, fb, c, fc
+    return a, fa, None, None, c, fc
 
                 
 if __name__ == '__main__':

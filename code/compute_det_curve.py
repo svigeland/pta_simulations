@@ -98,6 +98,7 @@ if __name__ == '__main__':
                         default=None)
     parser.add_argument('--outdir', help='Directory to put the detection curve files', 
                         default='det_curve/')
+    parser.add_argument('--max_iter', help='Maximum number of iterations to perform', default=10)
 
     args = parser.parse_args()
     
@@ -110,8 +111,10 @@ if __name__ == '__main__':
     psrlist = args.psrlist
     fap = float(args.fap)
     det_prob = float(args.det_prob)
-    datadir = args.datadir
 
+    max_iter = int(args.max_iter)
+
+    datadir = args.datadir
     if not os.path.exists(args.outdir):
         try:
             os.makedirs(args.outdir)
@@ -136,6 +139,8 @@ if __name__ == '__main__':
         print('Searching over the interval [{0:.1e}, {1:.1e}]...'.format(a, c))
         sys.stdout.flush()
 
+    iter = 0
+    
     with open(outfile, 'a') as f:
     
         if fa is None:
@@ -143,15 +148,17 @@ if __name__ == '__main__':
                                           datadir, endtime=endtime, psrlist=psrlist) - det_prob
             f.write('{0:.2e}  {1:>6.3f}\n'.format(a, fa))
             f.flush()
+            iter += 1
 
         if fc is None:
             fc = cw_sims.compute_det_prob(fgw, c, nreal, fap,
                                           datadir, endtime=endtime, psrlist=psrlist) - det_prob
             f.write('{0:.2e}  {1:>6.3f}\n'.format(c, fc))
             f.flush()
+            iter += 1
 
         # initially perform a bisection search
-        while b is None and (c-a) > float(args.htol)*a:
+        while b is None and (c-a) > float(args.htol)*a and iter < max_iter:
             
             print('Performing bisection search...')
             sys.stdout.flush()
@@ -163,6 +170,7 @@ if __name__ == '__main__':
         
             f.write('{0:.2e}  {1:>6.3f}\n'.format(x, fx))
             f.flush()
+            iter += 1
             
             if np.abs(np.log10(a) - np.log10(c)) > 1:
             
@@ -180,7 +188,7 @@ if __name__ == '__main__':
                 else:
                     b, fb = x, fx
 
-        if b is not None:
+        if b is not None and iter < max_iter:
 
             print('Switching to Brent\'s method...')
             print('Values are a = {0:.2e}, b = {1:.2e}, c = {2:.2e}'.format(a, b, c))
@@ -189,12 +197,13 @@ if __name__ == '__main__':
             # use Brent's root finding algorithm to estimate the value of the root
             x = cw_sims.compute_x(a, fa, b, fb, c, fc)
 
-            while np.abs(x-b) > float(args.htol)*b:
+            while np.abs(x-b) > float(args.htol)*b and iter < max_iter:
     
                 fx = cw_sims.compute_det_prob(fgw, x, nreal, fap,
                                               datadir, endtime=endtime, psrlist=psrlist) - det_prob
                 f.write('{0:.2e}  {1:>6.3f}\n'.format(x, fx))
                 f.flush()
+                iter += 1
         
                 # if fx is very close to fa, fb, or fc, simply replace that point
                 if np.abs(fx - fa) < 1/nreal:
@@ -218,3 +227,4 @@ if __name__ == '__main__':
             f.flush()
 
         print('Search complete.')
+        print('{0} iterations were performed.'.format(iter))

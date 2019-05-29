@@ -100,7 +100,7 @@ if __name__ == '__main__':
     
     import argparse
     
-    parser = argparse.ArgumentParser(description='Continuous Gravitational Wave Search via Enterprise')
+    parser = argparse.ArgumentParser(description='Continuous Gravitational Wave Simulations via Enterprise')
 
     parser.add_argument('--freq', help='GW frequency for search (DEFAULT: 1e-8)', default=1e-8)
     parser.add_argument('--hmin', help='Minimum GW strain (DEFAULT: 1e-17)', default=1e-17)

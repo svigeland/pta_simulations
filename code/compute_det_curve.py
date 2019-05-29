@@ -14,9 +14,6 @@ logging.getLogger().setLevel(logging.ERROR)
 
 def load_outfile(outfile, hmin, hmax):
 
-    # TO DO: make sure that I can handle all possible shapes of data
-    # what if there is just one line of data?
-
     data = np.loadtxt(outfile)
     
     if len(data.shape) == 1:

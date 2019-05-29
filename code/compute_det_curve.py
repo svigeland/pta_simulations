@@ -12,7 +12,7 @@ import cw_sims
 logging.getLogger().setLevel(logging.ERROR)
 
 
-def load_outfile(outfile, hmin, hmax):
+def load_outfile(outfile, hmin, hmax, recalculate=False):
     """
     Utility function that loads in the results from a previous calculation.
     Previous strain amplitudes and detection probabilities are loaded
@@ -92,6 +92,9 @@ def load_outfile(outfile, hmin, hmax):
         fa, fc = None, None
         print('There is a problem with the specified bounds!')
         print('Searching over the interval [{0:.1e}, {1:.1e}]...'.format(a, c))
+    
+    if recalculate:
+        fa, fc = None, None
 
     return a, fa, None, None, c, fc
 
@@ -126,6 +129,8 @@ if __name__ == '__main__':
     parser.add_argument('--outdir', help='Directory to put the detection curve files', 
                         default='det_curve/')
     parser.add_argument('--max_iter', help='Maximum number of iterations to perform', default=10)
+    parser.add_argument('--recalculate', action='store_true', default=False,
+                        help='When loading from a file, should I recalculate the detection probabilities?')
 
     args = parser.parse_args()
     
@@ -156,7 +161,8 @@ if __name__ == '__main__':
     if os.path.isfile(outfile) and os.stat(outfile).st_size > 1:
         print('Resuming from a previous calculation...')
         sys.stdout.flush()
-        a, fa, b, fb, c, fc = load_outfile(outfile, float(args.hmin), float(args.hmax))
+        a, fa, b, fb, c, fc = load_outfile(outfile, float(args.hmin), float(args.hmax),
+                                           args.recalculate)
     else:
         a, c = float(args.hmin), float(args.hmax)
         fa, fc = None, None

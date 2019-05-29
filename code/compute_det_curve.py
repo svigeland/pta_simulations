@@ -141,20 +141,18 @@ if __name__ == '__main__':
             pass
 
     outfile = '{0}/{1}.txt'.format(args.outdir, args.freq)
-    
+
+    # if the outfile exists and is not empty, use the results from a previous run
+    # to define the bounds of the search
+    # otherwise search over the entire range
     if os.path.isfile(outfile) and os.stat(outfile).st_size > 1:
-        
         print('Resuming from a previous calculation...')
         sys.stdout.flush()
-        
         a, fa, b, fb, c, fc = load_outfile(outfile, float(args.hmin), float(args.hmax))
-    
     else:
-
         a, c = float(args.hmin), float(args.hmax)
         fa, fc = None, None
-        b = None
-
+        b, fb = None, None
         print('Searching over the interval [{0:.1e}, {1:.1e}]...'.format(a, c))
         sys.stdout.flush()
 

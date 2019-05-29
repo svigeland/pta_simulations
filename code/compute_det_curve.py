@@ -67,6 +67,14 @@ def load_outfile(outfile, hmin, hmax):
             
     print('Initializing from file with a = {0:.2e}, c = {1:.2e}'.format(a, c))
 
+    # check that a < c, and if not, expand the bounds
+    if a > c:
+        a /= 2
+        c *= 2
+        fa, fc = None, None
+        print('There is a problem with the specified bounds!')
+        print('Searching over the interval [{0:.1e}, {1:.1e}]...'.format(a, c))
+
     return a, fa, None, None, c, fc
 
                 

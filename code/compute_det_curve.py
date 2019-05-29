@@ -95,7 +95,15 @@ def load_outfile(outfile, hmin, hmax):
 
     return a, fa, None, None, c, fc
 
-                
+
+def isclose(f1, f2, tol):
+
+    if np.abs(f1-f2) < tol and np.sign(f1) == np.sign(f2):
+        return True
+    else:
+        return False
+
+
 if __name__ == '__main__':
     
     import argparse
@@ -189,21 +197,13 @@ if __name__ == '__main__':
             f.flush()
             iter += 1
             
-            if np.abs(np.log10(a) - np.log10(c)) > 1:
-            
+            if c/a > 10 or isclose(fx, fa, 1/nreal) or isclose(fx, fc, 1/nreal):
                 if np.sign(fa) == np.sign(fx):
                     a, fa = x, fx
                 else:
                     c, fc = x, fx
-            
             else:
-    
-                if np.abs(fx - fa) < 1/nreal and np.sign(fa) == np.sign(fx):
-                    a, fa = x, fx
-                elif np.abs(fx - fc) < 1/nreal and np.sign(fc) == np.sign(fx):
-                    c, fc = x, fx
-                else:
-                    b, fb = x, fx
+                b, fb = x, fx
 
         if b is not None and iter < max_iter:
 

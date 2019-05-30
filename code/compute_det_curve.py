@@ -242,6 +242,11 @@ if __name__ == '__main__':
         
             # use Brent's root finding algorithm to estimate the value of the root
             x = cw_sims.compute_x(a, fa, b, fb, c, fc)
+            
+            # if x is not bracketed by a and c, quit
+            if x < a or x > c:
+                iter = max_iter
+                print('ERROR: I generated a value of the root that lay outside of the interval!')
 
             while np.abs(x-b) > float(args.htol)*b and iter < max_iter:
     
@@ -283,7 +288,10 @@ if __name__ == '__main__':
                                 b, fb = x, fx
         
                 x = cw_sims.compute_x(a, fa, b, fb, c, fc)
-            
+                if x < a or x > c:
+                    iter = max_iter
+                    print('ERROR: I generated a value of the root that lay outside of the interval!')
+
             fx = cw_sims.compute_det_prob(fgw, x, nreal, fap,
                                           datadir, endtime=endtime, psrlist=psrlist) - det_prob
             f.write('{0:.2e}  {1:>6.3f}\n'.format(x, fx))

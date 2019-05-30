@@ -157,7 +157,7 @@ def compute_x(a, fa, b, fb, c, fc, verbose=False):
         if verbose:
             print('Finding new point... interval is [{0:.2e}, {1:.2e}]'.format(a, c))
             if b is not None:
-                print('Midpoint value is {0.2e}'.format(b))
+                print('Midpoint value is {0:.2e}'.format(b))
             sys.stdout.flush()
     
         # if only the endpoints of the bracket are defined, perform a bisection search

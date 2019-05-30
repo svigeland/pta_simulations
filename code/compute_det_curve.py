@@ -112,9 +112,14 @@ def isclose(f1, f2, tol):
         return False
 
 
+def bisection(a, fa, c, fc):
+
+    return 10**((np.log10(a) + np.log10(c))/2), (c-a)/2
+
+
 def linear_interp(a, fa, c, fc):
     
-    return 10**(np.log10(a) - (np.log10(c)-np.log10(a))*fa/(fc-fa))
+    return 10**(np.log10(a) - (np.log10(c)-np.log10(a))*fa/(fc-fa)), (c-a)/2
 
 
 def inv_quad_interp(a, fa, b, fb, c, fc):
@@ -126,23 +131,92 @@ def inv_quad_interp(a, fa, b, fb, c, fc):
     P = S*(T*(R-T)*(c-b) - (1.-R)*(b-a))
     Q = (T-1.)*(R-1.)*(S-1.)
     
-    return b + P/Q
+    return b + P/Q, np.abs(P/Q)
 
 
-def compute_x(a, fa, b, fb, c, fc):
+def compute_x(a, fa, b, fb, c, fc, verbose=False):
+    
+    # check that all of the values are in the correct order
+    if a > c or fa > 0 or fc < 0:
+        x, xerr = None, None
+    
+    # check that b lies between a and c, and fb lies between fa and fc
+    # if not, we will not use b to compute the root
+    elif b is not None:
+        if a > b or b > c or fa > fb or fb > fc:
+            b, fb = None, None
 
-    # estimate the location of the root using inverse quadratic interpolation
-    x = inv_quad_interp(a, fa, b, fb, c, fc)
-
-    # if inverse quadratic interpolation generates a root outside of the bracket,
-    # use linear interpolation instead
-    if x < a or x > c:
-        if np.sign(fb) == np.sign(fc):
-            x = linear_interp(a, fa, b, fb)
+    else:
+        if verbose:
+            print('Finding new point... interval is [{0:.2e}, {1:.2e}]'.format(a, c))
+            if b is not None:
+                print('Midpoint value is {0.2e}'.format(b))
+            sys.stdout.flush()
+    
+        # if only the endpoints of the bracket are defined, perform a bisection search
+        # otherwise use quadratic interpolation
+        if b is None:
+            x, xerr = bisection(a, fa, c, fc)
+    
+            if verbose:
+                print('Generating new point using bisection method...')
+                print('x = {0:.2e}, xerr = {1:.2e}'.format(x, xerr))
+                sys.stdout.flush()
         else:
-            x = linear_interp(b, fb, c, fc)
+            x, xerr = inv_quad_interp(a, fa, b, fb, c, fc)
 
-    return x
+            # if inverse quadratic interpolation generates a root outside of the bracket,
+            # use linear interpolation instead
+            if x < a or x > c:
+                if np.sign(fb) == np.sign(fc):
+                    x, xerr = linear_interp(a, fa, b, fb)
+                else:
+                    x, xerr = linear_interp(b, fb, c, fc)
+                if verbose:
+                    print('Generating new point using linear interpolation...')
+                    print('x = {0:.2e}, xerr = {1:.2e}'.format(x, xerr))
+                    sys.stdout.flush()
+            else:
+                if verbose:
+                    print('Generating new point using inverse quadratic interpolation...')
+                    print('x = {0:.2e}, xerr = {1:.2e}'.format(x, xerr))
+                    sys.stdout.flush()
+
+    return x, xerr
+
+
+def set_new_bounds(a, fa, b, fb, c, fc, x, fx, nreal):
+
+    if isclose(fx, fa, 1/nreal):
+        a, fa = x, fx
+    elif isclose(fx, fc, 1/nreal):
+        c, fc = x, fx
+    elif b is None:
+        if xerr/x > 2:
+            if np.sign(fa) == np.sign(fx):
+                a, fa = x, fx
+            else:
+                c, fc = x, fx
+        else:
+            b, fb = x, fx
+    else:
+        if isclose(fx, fb, 1/nreal):
+            b, fb = x, fx
+        else:
+            if np.sign(fb) == np.sign(fa):
+                if np.sign(fx) == np.sign(fc):
+                    c, fc = x, fx
+                else:
+                    a, fa = b, fb
+                    b, fb = x, fx
+            else:
+                if np.sign(fx) == np.sign(fa):
+                    a, fa = x, fx
+                else:
+                    c, fc = b, fb
+                    b, fb = x, fx
+
+    return a, fa, b, fb, c, fc
 
 
 if __name__ == '__main__':
@@ -169,6 +243,8 @@ if __name__ == '__main__':
     parser.add_argument('--max_iter', help='Maximum number of iterations to perform', default=10)
     parser.add_argument('--recalculate', action='store_true', default=False,
                         help='When loading from a file, should I recalculate the detection probabilities?')
+    parser.add_argument('--verbose', action='store_true', default=False,
+                        help='Print extra messages (helpful for debugging purposes')
 
     args = parser.parse_args()
     
@@ -181,6 +257,7 @@ if __name__ == '__main__':
     psrlist = args.psrlist
     fap = float(args.fap)
     det_prob = float(args.det_prob)
+    htol = float(args.htol)
 
     max_iter = int(args.max_iter)
 
@@ -210,117 +287,96 @@ if __name__ == '__main__':
 
     iter = 0
     
-    with open(outfile, 'a') as f:
-    
-        if fa is None:
-            fa = cw_sims.compute_det_prob(fgw, a, nreal, fap,
-                                          datadir, endtime=endtime, psrlist=psrlist) - det_prob
-            f.write('{0:.2e}  {1:>6.3f}\n'.format(a, fa))
-            f.flush()
-            iter += 1
+    if fa is None:
+        fa = cw_sims.compute_det_prob(fgw, a, nreal, fap, datadir,
+                                      endtime=endtime, psrlist=psrlist) - det_prob
+        iter += 1
         
         # if fa > 0, try a smaller value for a
-        while fa > 0:
+        while fa > 0 and iter < max_iter:
             a /= 2
-            fa = cw_sims.compute_det_prob(fgw, a, nreal, fap,
-                                          datadir, endtime=endtime, psrlist=psrlist) - det_prob
-            f.write('{0:.2e}  {1:>6.3f}\n'.format(a, fa))
-            f.flush()
+            fa = cw_sims.compute_det_prob(fgw, a, nreal, fap, datadir,
+                                          endtime=endtime, psrlist=psrlist) - det_prob
             iter += 1
 
-        if fc is None:
-            fc = cw_sims.compute_det_prob(fgw, c, nreal, fap,
-                                          datadir, endtime=endtime, psrlist=psrlist) - det_prob
-            f.write('{0:.2e}  {1:>6.3f}\n'.format(c, fc))
-            f.flush()
-            iter += 1
+        with open(outfile, 'a') as f:
+            f.write('{0:.2e}  {1:>6.3f}\n'.format(a, fa))
+
+    if fc is None:
+        fc = cw_sims.compute_det_prob(fgw, c, nreal, fap, datadir,
+                                      endtime=endtime, psrlist=psrlist) - det_prob
+        iter += 1
 
         # if fc < 0, try a larger value for c
-        while fc < 0:
+        while fc < 0 and iter < max_iter:
             c *= 2
-            fc = cw_sims.compute_det_prob(fgw, c, nreal, fap,
-                                          datadir, endtime=endtime, psrlist=psrlist) - det_prob
+            fc = cw_sims.compute_det_prob(fgw, c, nreal, fap, datadir,
+                                          endtime=endtime, psrlist=psrlist) - det_prob
+            iter += 1
+
+        with open(outfile, 'a') as f:
             f.write('{0:.2e}  {1:>6.3f}\n'.format(c, fc))
-            f.flush()
-            iter += 1
 
-        # initially perform a bisection search
-        while b is None and (c-a) > float(args.htol)*a and iter < max_iter:
-            
-            print('Performing bisection search...')
-            sys.stdout.flush()
-    
-            x = 10**((np.log10(a) + np.log10(c))/2)
-            fx = cw_sims.compute_det_prob(fgw, x, nreal, fap,
-                                          datadir, endtime=endtime, psrlist=psrlist) - det_prob
+    x, xerr = compute_x(a, fa, b, fb, c, fc,
+                        verbose=args.verbose)
         
+    while x is not None and xerr/x > htol and iter < max_iter:
+        
+        fx = cw_sims.compute_det_prob(fgw, x, nreal, fap, datadir,
+                                      endtime=endtime, psrlist=psrlist) - det_prob
+        iter += 1
+
+        with open(outfile, 'a') as f:
             f.write('{0:.2e}  {1:>6.3f}\n'.format(x, fx))
-            f.flush()
-            iter += 1
-            
-            if c/a > 10 or isclose(fx, fa, 1/nreal) or isclose(fx, fc, 1/nreal):
-                if np.sign(fa) == np.sign(fx):
-                    a, fa = x, fx
-                else:
-                    c, fc = x, fx
-            else:
-                b, fb = x, fx
 
-        # now use Brent's method
-        if b is not None and iter < max_iter:
+        # redefine the points a, b, c to incorporate x
+        a, fa, b, fb, c, fc = set_new_bounds(a, fa, b, fb, c, fc,
+                                             x, fx, nreal)
 
-            print('Switching to Brent\'s method...')
-            print('Values are a = {0:.2e}, b = {1:.2e}, c = {2:.2e}'.format(a, b, c))
-            sys.stdout.flush()
-        
-            # use Brent's root finding algorithm to estimate the value of the root
-            x = compute_x(a, fa, b, fb, c, fc)
+        # check that f is monotonically increasing between a, b, and c
+        # if not, adjust the endpoints a and c
+        if fb is not None:
             
-            while np.abs(x-b) > float(args.htol)*b and iter < max_iter:
-    
-                fx = cw_sims.compute_det_prob(fgw, x, nreal, fap,
-                                              datadir, endtime=endtime, psrlist=psrlist) - det_prob
-                f.write('{0:.2e}  {1:>6.3f}\n'.format(x, fx))
-                f.flush()
+            while fa > fb and iter < max_iter:
+
+                if verbose:
+                    print('Adjusting lower bound of interval...')
+                    sys.stdout.flush()
+                        
+                a /= 2
+                fa = cw_sims.compute_det_prob(fgw, a, nreal, fap, datadir,
+                                              endtime=endtime, psrlist=psrlist) - det_prob
                 iter += 1
-        
-                # if fx is very close to fa, fb, or fc, replace that point with the new point
-                if isclose(fx, fa, 1/nreal):
-                    a, fa = x, fx
-                elif isclose(fx, fb, 1/nreal):
-                    b, fb = x, fx
-                elif isclose(fx, fc, 1/nreal):
-                    c, fc = x, fx
-                else:
-                    # otherwise reorder a, b, and c
-                    # this section relies on the fact that the detection probability
-                    # should be a monotonically increasing function, but may not be
-                    # due to the finite number of realizations
-                    if np.sign(fb) == np.sign(fa):
-                        if np.sign(fx) == np.sign(fc):
-                            c, fc = x, fx
-                        else:
-                            if fx > fb:
-                                a, fa = b, fb
-                                b, fb = x, fx
-                            elif fx > fa:
-                                b, fb = x, fx
-                    else:
-                        if np.sign(fx) == np.sign(fa):
-                            a, fa = x, fx
-                        else:
-                            if fx < fb:
-                                c, fc = b, fb
-                                b, fb = x, fx
-                            elif fx < fc:
-                                b, fb = x, fx
-        
-                x = compute_x(a, fa, b, fb, c, fc)
+                        
+                with open(outfile, 'a') as f:
+                    f.write('{0:.2e}  {1:>6.3f}\n'.format(a, fa))
 
-            fx = cw_sims.compute_det_prob(fgw, x, nreal, fap,
-                                          datadir, endtime=endtime, psrlist=psrlist) - det_prob
+            while fc < fb and iter < max_iter:
+                        
+                if verbose:
+                    print('Adjusting upper bound of interval...')
+                    sys.stdout.flush()
+
+                c *= 2
+                fc = cw_sims.compute_det_prob(fgw, c, nreal, fap, datadir,
+                                              endtime=endtime, psrlist=psrlist) - det_prob
+                iter += 1
+                        
+                with open(outfile, 'a') as f:
+                    f.write('{0:.2e}  {1:>6.3f}\n'.format(c, fc))
+
+        x, xerr = compute_x(a, fa, b, fb, c, fc,
+                            verbose=args.verbose)
+
+    if x is None:
+        print('I could not find the root!')
+    else:
+        fx = cw_sims.compute_det_prob(fgw, x, nreal, fap, datadir,
+                                      endtime=endtime, psrlist=psrlist) - det_prob
+        
+        with open(outfile, 'a') as f:
             f.write('{0:.2e}  {1:>6.3f}\n'.format(x, fx))
-            f.flush()
 
         print('Search complete.')
         print('{0} iterations were performed.'.format(iter))
+        print('Best estimate for the root: {0:.2e} +/- {1:.2e}'.format(x, xerr))

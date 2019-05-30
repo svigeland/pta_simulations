@@ -28,6 +28,11 @@ def load_outfile(outfile, hmin, hmax, recalculate=False):
     if len(data.shape) == 1:
         data = np.array([data])
     
+    # remove any points where the detection probability is not finite
+    if np.any(~np.isfinite(data[:,1])):
+        idx = np.where(np.isfinite(data[:,1]))[0]
+        data = data[idx]
+    
     det_probs = np.unique(data[:,1])
 
     if len(det_probs) == 1:

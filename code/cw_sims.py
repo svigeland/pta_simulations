@@ -190,16 +190,3 @@ def compute_det_prob(fgw, h, nreal, fap,
     else:
         print('Computed {0} realizations in {1} s'.format(count, time.time() - t0))
         return detect/count
-
-
-# uses Brent's method to estimate the root
-def compute_x(a, fa, b, fb, c, fc):
-    
-    R = fb/fc
-    S = fb/fa
-    T = fa/fc
-    
-    P = S*(T*(R-T)*(c-b) - (1.-R)*(b-a))
-    Q = (T-1.)*(R-1.)*(S-1.)
-    
-    return b + P/Q

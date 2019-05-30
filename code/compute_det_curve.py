@@ -79,6 +79,9 @@ def load_outfile(outfile, hmin, hmax, recalculate=False):
             a, fa = data2[int(ii)]
         else:
             a, fa = data[int(idx)]
+
+        if hmin > a:
+            a, fa = hmin, None
     
         idx = np.where(data[:,1] > 0)[0]
         if len(idx) > 1:
@@ -87,6 +90,9 @@ def load_outfile(outfile, hmin, hmax, recalculate=False):
             c, fc = data2[int(ii)]
         else:
             c, fc = data[int(idx)]
+                
+        if hmax < c:
+            c, fc = hmax, None
             
     print('Initializing from file with a = {0:.2e}, c = {1:.2e}'.format(a, c))
 
@@ -97,7 +103,7 @@ def load_outfile(outfile, hmin, hmax, recalculate=False):
         fa, fc = None, None
         print('There is a problem with the specified bounds!')
         print('Searching over the interval [{0:.1e}, {1:.1e}]...'.format(a, c))
-    
+
     if recalculate:
         fa, fc = None, None
 
@@ -140,13 +146,14 @@ def compute_x(a, fa, b, fb, c, fc, verbose=False):
     if a > c or fa > 0 or fc < 0:
         x, xerr = None, None
     
-    # check that b lies between a and c, and fb lies between fa and fc
-    # if not, we will not use b to compute the root
-    elif b is not None:
-        if a > b or b > c or fa > fb or fb > fc:
-            b, fb = None, None
-
     else:
+    
+        # check that a < b < c, and fa < fb < fc
+        # if not, we will not use b to compute the root
+        if b is not None:
+            if a > b or b > c or fa > fb or fb > fc:
+                b, fb = None, None
+
         if verbose:
             print('Finding new point... interval is [{0:.2e}, {1:.2e}]'.format(a, c))
             if b is not None:

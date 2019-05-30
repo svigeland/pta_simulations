@@ -180,8 +180,26 @@ if __name__ == '__main__':
             f.write('{0:.2e}  {1:>6.3f}\n'.format(a, fa))
             f.flush()
             iter += 1
+        
+        # if fa > 0, try a smaller value for a
+        while fa > 0:
+            a /= 2
+            fa = cw_sims.compute_det_prob(fgw, a, nreal, fap,
+                                          datadir, endtime=endtime, psrlist=psrlist) - det_prob
+            f.write('{0:.2e}  {1:>6.3f}\n'.format(a, fa))
+            f.flush()
+            iter += 1
 
         if fc is None:
+            fc = cw_sims.compute_det_prob(fgw, c, nreal, fap,
+                                          datadir, endtime=endtime, psrlist=psrlist) - det_prob
+            f.write('{0:.2e}  {1:>6.3f}\n'.format(c, fc))
+            f.flush()
+            iter += 1
+
+        # if fc < 0, try a larger value for c
+        while fc < 0:
+            c *= 2
             fc = cw_sims.compute_det_prob(fgw, c, nreal, fap,
                                           datadir, endtime=endtime, psrlist=psrlist) - det_prob
             f.write('{0:.2e}  {1:>6.3f}\n'.format(c, fc))

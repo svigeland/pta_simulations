@@ -112,6 +112,11 @@ def isclose(f1, f2, tol):
         return False
 
 
+def linear_interp(a, fa, c, fc):
+    
+    return 10**(np.log10(a) - (np.log10(c)-np.log10(a))*fa/(fc-fa))
+
+
 if __name__ == '__main__':
     
     import argparse
@@ -242,12 +247,14 @@ if __name__ == '__main__':
         
             # use Brent's root finding algorithm to estimate the value of the root
             x = cw_sims.compute_x(a, fa, b, fb, c, fc)
-            
-            # if x is not bracketed by a and c, quit
-            if x < a or x > c:
-                iter = max_iter
-                print('ERROR: I generated a value of the root that lay outside of the interval!')
 
+            # if x is not bracketed by a and c, use linear interpolation to generate the new point
+            if x < a or x > c:
+                if np.sign(fb) == np.sign(fc):
+                    x = linear_interp(a, fa, b, fb)
+                else:
+                    x = linear_interp(b, fb, c, fc)
+            
             while np.abs(x-b) > float(args.htol)*b and iter < max_iter:
     
                 fx = cw_sims.compute_det_prob(fgw, x, nreal, fap,
@@ -289,8 +296,10 @@ if __name__ == '__main__':
         
                 x = cw_sims.compute_x(a, fa, b, fb, c, fc)
                 if x < a or x > c:
-                    iter = max_iter
-                    print('ERROR: I generated a value of the root that lay outside of the interval!')
+                    if np.sign(fb) == np.sign(fc):
+                        x = linear_interp(a, fa, b, fb)
+                    else:
+                        x = linear_interp(b, fb, c, fc)
 
             fx = cw_sims.compute_det_prob(fgw, x, nreal, fap,
                                           datadir, endtime=endtime, psrlist=psrlist) - det_prob

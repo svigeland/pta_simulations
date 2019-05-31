@@ -108,7 +108,8 @@ def make_sim(datadir, fgw, h, endtime=None, psrlist=None):
                    phase_approx=True, tref=0)
     
     for lp in libs_psrs:
-        lp.fit(iters=2)
+#        lp.fit(iters=2)
+        lp.fit(iters=1)
         
     # convert to enterprise pulsar objects
     psrs = []

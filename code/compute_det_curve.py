@@ -262,7 +262,7 @@ if __name__ == '__main__':
     parser.add_argument('--max_iter', default=10,
                         help='Maximum number of iterations to perform')
     parser.add_argument('--recalculate', action='store_true', default=False,
-                        help='When loading from a file, should I recalculate the detection probabilities?')
+                        help='Recalculate the detection probabilities when loading from file')
     parser.add_argument('--debug', action='store_true', default=False,
                         help='Sets logger level to DEBUG')
 

@@ -158,7 +158,7 @@ def compute_x(a, fa, b, fb, c, fc, nreal):
         # check that a < b < c, and fa < fb < fc
         # if not, we will not use b to compute the root
         if b is not None:
-            if isclose(fb, fa, nreal) or isclose(fb, fc, nreal):
+            if isclose(fb, fa, 1/nreal) or isclose(fb, fc, 1/nreal):
                 b, fb = None, None
             elif a > b or b > c or fa > fb or fb > fc:
                 b, fb = None, None

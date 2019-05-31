@@ -22,7 +22,7 @@ from enterprise_extensions import models
 from enterprise_extensions import model_utils
 from enterprise_extensions.frequentist import F_statistic
 
-logging.getLogger().setLevel(logging.ERROR)
+logger = logging.getLogger(__name__)
 
 
 day_in_sec = 24.*3600
@@ -185,8 +185,9 @@ def compute_det_prob(fgw, h, nreal, fap,
                 detect += 1
 
     if count == 0:
-        print('ERROR: No simulated data sets were generated!')
+        logger.error('No simulated data sets were generated!')
         return np.inf
     else:
-        print('Computed {0} realizations in {1} s'.format(count, time.time() - t0))
+        msg = 'Computed {0} realizations in {1} s'.format(count, time.time() - t0)
+        logger.info(msg)
         return detect/count

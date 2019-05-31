@@ -9,7 +9,7 @@ import logging
 
 import cw_sims
 
-logging.getLogger().setLevel(logging.ERROR)
+logger = logging.getLogger(__name__)
 
 
 def load_outfile(outfile, hmin, hmax, recalculate=False):
@@ -94,15 +94,15 @@ def load_outfile(outfile, hmin, hmax, recalculate=False):
         if hmax < c:
             c, fc = hmax, None
             
-    print('Initializing from file with a = {0:.2e}, c = {1:.2e}'.format(a, c))
+    logger.info('Initializing from file with a = {0:.2e}, c = {1:.2e}'.format(a, c))
 
     # check that a < c, and if not, expand the bounds
     if a > c:
         a /= 2
         c *= 2
         fa, fc = None, None
-        print('There is a problem with the specified bounds!')
-        print('Searching over the interval [{0:.1e}, {1:.1e}]...'.format(a, c))
+        logger.warning('There is a problem with the specified bounds!')
+        logger.warning('Searching over the interval [{0:.1e}, {1:.1e}]...'.format(a, c))
 
     if recalculate:
         fa, fc = None, None
@@ -140,10 +140,12 @@ def inv_quad_interp(a, fa, b, fb, c, fc):
     return b + P/Q, np.abs(P/Q)
 
 
-def compute_x(a, fa, b, fb, c, fc, verbose=False):
+def compute_x(a, fa, b, fb, c, fc):
     
     # check that all of the values are in the correct order
     if a > c or fa > 0 or fc < 0:
+        msg = 'The root is not contained within the interval [{0:.2e}, {1:.2e}]!'.format(a, c)
+        logger.error(msg)
         x, xerr = None, None
     
     else:
@@ -154,21 +156,16 @@ def compute_x(a, fa, b, fb, c, fc, verbose=False):
             if a > b or b > c or fa > fb or fb > fc:
                 b, fb = None, None
 
-        if verbose:
-            print('Finding new point... interval is [{0:.2e}, {1:.2e}]'.format(a, c))
-            if b is not None:
-                print('Midpoint value is {0:.2e}'.format(b))
-            sys.stdout.flush()
+        logger.debug('Finding new point... interval is [{0:.2e}, {1:.2e}]'.format(a, c))
     
         # if only the endpoints of the bracket are defined, perform a bisection search
         # otherwise use quadratic interpolation
         if b is None:
             x, xerr = bisection(a, fa, c, fc)
     
-            if verbose:
-                print('Generating new point using bisection method...')
-                print('x = {0:.2e}, xerr = {1:.2e}'.format(x, xerr))
-                sys.stdout.flush()
+            msg = 'Generating new point using bisection method...'
+            msg += ' x = {0:.2e}, xerr = {1:.2e}'.format(x, xerr)
+            logger.debug(msg)
         else:
             x, xerr = inv_quad_interp(a, fa, b, fb, c, fc)
 
@@ -179,15 +176,13 @@ def compute_x(a, fa, b, fb, c, fc, verbose=False):
                     x, xerr = linear_interp(a, fa, b, fb)
                 else:
                     x, xerr = linear_interp(b, fb, c, fc)
-                if verbose:
-                    print('Generating new point using linear interpolation...')
-                    print('x = {0:.2e}, xerr = {1:.2e}'.format(x, xerr))
-                    sys.stdout.flush()
+                msg = 'Generating new point using linear interpolation...'
+                msg += ' x = {0:.2e}, xerr = {1:.2e}'.format(x, xerr)
+                logger.debug(msg)
             else:
-                if verbose:
-                    print('Generating new point using inverse quadratic interpolation...')
-                    print('x = {0:.2e}, xerr = {1:.2e}'.format(x, xerr))
-                    sys.stdout.flush()
+                msg = 'Generating new point using inverse quadratic interpolation...'
+                msg += ' x = {0:.2e}, xerr = {1:.2e}'.format(x, xerr)
+                logger.debug(msg)
 
     return x, xerr
 
@@ -250,11 +245,20 @@ if __name__ == '__main__':
     parser.add_argument('--max_iter', help='Maximum number of iterations to perform', default=10)
     parser.add_argument('--recalculate', action='store_true', default=False,
                         help='When loading from a file, should I recalculate the detection probabilities?')
-    parser.add_argument('--verbose', action='store_true', default=False,
-                        help='Print extra messages (helpful for debugging purposes')
+    parser.add_argument('--debug', action='store_true', default=False,
+                        help='Sets logger level to DEBUG (otherwise logger level is INFO)')
 
     args = parser.parse_args()
     
+    # the logging level for __main__ can be either INFO or DEBUG, depending on the arguments
+    if args.debug:
+        logger.setLevel(logging.DEBUG)
+    else:
+        logger.setLevel(logging.INFO)
+    
+    # set the logging level of enterprise.pulsar to ERROR
+    logging.getLogger('enterprise.pulsar').setLevel(logging.ERROR)
+
     fgw = float(args.freq)
     nreal = int(args.nreal)
     if args.endtime is None:
@@ -281,16 +285,14 @@ if __name__ == '__main__':
     # to define the bounds of the search
     # otherwise search over the entire range
     if os.path.isfile(outfile) and os.stat(outfile).st_size > 1:
-        print('Resuming from a previous calculation...')
-        sys.stdout.flush()
+        logger.info('Resuming from a previous calculation...')
         a, fa, b, fb, c, fc = load_outfile(outfile, float(args.hmin), float(args.hmax),
                                            args.recalculate)
     else:
         a, c = float(args.hmin), float(args.hmax)
         fa, fc = None, None
         b, fb = None, None
-        print('Searching over the interval [{0:.1e}, {1:.1e}]...'.format(a, c))
-        sys.stdout.flush()
+        logger.info('Searching over the interval [{0:.1e}, {1:.1e}]...'.format(a, c))
 
     iter = 0
     
@@ -301,6 +303,7 @@ if __name__ == '__main__':
         
         # if fa > 0, try a smaller value for a
         while fa > 0 and iter < max_iter:
+            logger.warning('Adjusting lower bound of interval...')
             a /= 2
             fa = cw_sims.compute_det_prob(fgw, a, nreal, fap, datadir,
                                           endtime=endtime, psrlist=psrlist) - det_prob
@@ -316,6 +319,7 @@ if __name__ == '__main__':
 
         # if fc < 0, try a larger value for c
         while fc < 0 and iter < max_iter:
+            logger.warning('Adjusting upper bound of interval...')
             c *= 2
             fc = cw_sims.compute_det_prob(fgw, c, nreal, fap, datadir,
                                           endtime=endtime, psrlist=psrlist) - det_prob
@@ -324,8 +328,7 @@ if __name__ == '__main__':
         with open(outfile, 'a') as f:
             f.write('{0:.2e}  {1:>6.3f}\n'.format(c, fc))
 
-    x, xerr = compute_x(a, fa, b, fb, c, fc,
-                        verbose=args.verbose)
+    x, xerr = compute_x(a, fa, b, fb, c, fc)
         
     while x is not None and xerr/x > htol and iter < max_iter:
         
@@ -345,11 +348,7 @@ if __name__ == '__main__':
         if fb is not None:
             
             while fa > fb and iter < max_iter:
-
-                if verbose:
-                    print('Adjusting lower bound of interval...')
-                    sys.stdout.flush()
-                        
+                logger.warning('Adjusting lower bound of interval...')
                 a /= 2
                 fa = cw_sims.compute_det_prob(fgw, a, nreal, fap, datadir,
                                               endtime=endtime, psrlist=psrlist) - det_prob
@@ -359,11 +358,7 @@ if __name__ == '__main__':
                     f.write('{0:.2e}  {1:>6.3f}\n'.format(a, fa))
 
             while fc < fb and iter < max_iter:
-                        
-                if verbose:
-                    print('Adjusting upper bound of interval...')
-                    sys.stdout.flush()
-
+                logger.warning('Adjusting upper bound of interval...')
                 c *= 2
                 fc = cw_sims.compute_det_prob(fgw, c, nreal, fap, datadir,
                                               endtime=endtime, psrlist=psrlist) - det_prob
@@ -372,18 +367,18 @@ if __name__ == '__main__':
                 with open(outfile, 'a') as f:
                     f.write('{0:.2e}  {1:>6.3f}\n'.format(c, fc))
 
-        x, xerr = compute_x(a, fa, b, fb, c, fc,
-                            verbose=args.verbose)
+        x, xerr = compute_x(a, fa, b, fb, c, fc)
 
     if x is None:
-        print('I could not find the root!')
+        logger.error('I could not find the root!')
     else:
         fx = cw_sims.compute_det_prob(fgw, x, nreal, fap, datadir,
                                       endtime=endtime, psrlist=psrlist) - det_prob
-        
+        iter += 1
+
         with open(outfile, 'a') as f:
             f.write('{0:.2e}  {1:>6.3f}\n'.format(x, fx))
 
-        print('Search complete.')
-        print('{0} iterations were performed.'.format(iter))
-        print('Best estimate for the root: {0:.2e} +/- {1:.2e}'.format(x, xerr))
+        logger.info('Search complete.')
+        logger.info('{0} iterations were performed.'.format(iter))
+        logger.info('Best estimate for the root: {0:.2e} +/- {1:.2e}'.format(x, xerr))

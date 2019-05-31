@@ -95,13 +95,8 @@ def make_sim(datadir, fgw, h, endtime=None, psrlist=None):
     inc = np.arccos(np.random.uniform(-1, 1))
     psi = np.random.uniform(0, np.pi)
     
-    coal = True
-    while coal:
-        mc_max = min(compute_max_chirpmass(np.log10(fgw)),10)
-        mc = 10**np.random.uniform(6, mc_max)
-        tcoal = 2e6 * (mc/1e8)**(-5/3) * (fgw/1e-8)**(-8/3)
-        if tcoal > Tmaxyr:
-            coal = False
+    mc_max = min(compute_max_chirpmass(np.log10(fgw)),10)
+    mc = 10**np.random.uniform(6, mc_max)
 
     dist = 4 * np.sqrt(2/5) * (mc*4.9e-6)**(5/3) * (np.pi*fgw)**(2/3) / h
     dist /= 1.0267e14   # covert distance to Mpc

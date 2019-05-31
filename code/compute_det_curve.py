@@ -144,7 +144,7 @@ def inv_quad_interp(a, fa, b, fb, c, fc):
     return b + P/Q, np.abs(P/Q)
 
 
-def compute_x(a, fa, b, fb, c, fc):
+def compute_x(a, fa, b, fb, c, fc, nreal):
     
     # check that all of the values are in the correct order
     if a > c or fa > 0 or fc < 0:
@@ -158,7 +158,7 @@ def compute_x(a, fa, b, fb, c, fc):
         # check that a < b < c, and fa < fb < fc
         # if not, we will not use b to compute the root
         if b is not None:
-            if isclose(fb, fa) or isclose(fb, fc):
+            if isclose(fb, fa, nreal) or isclose(fb, fc, nreal):
                 b, fb = None, None
             elif a > b or b > c or fa > fb or fb > fc:
                 b, fb = None, None
@@ -353,7 +353,7 @@ if __name__ == '__main__':
         with open(outfile, 'a') as f:
             f.write('{0:.2e}  {1:>6.3f}\n'.format(c, fc))
 
-    x, xerr = compute_x(a, fa, b, fb, c, fc)
+    x, xerr = compute_x(a, fa, b, fb, c, fc, nreal)
         
     while x is not None and xerr/x > htol and iter < max_iter:
         
@@ -395,7 +395,7 @@ if __name__ == '__main__':
                 with open(outfile, 'a') as f:
                     f.write('{0:.2e}  {1:>6.3f}\n'.format(c, fc))
 
-        x, xerr = compute_x(a, fa, b, fb, c, fc)
+        x, xerr = compute_x(a, fa, b, fb, c, fc, nreal)
 
     if x is None:
         logger.error('I could not find the root!')

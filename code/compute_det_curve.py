@@ -154,11 +154,13 @@ def compute_x(a, fa, b, fb, c, fc):
         x, xerr = None, None
     
     else:
-    
+        
         # check that a < b < c, and fa < fb < fc
         # if not, we will not use b to compute the root
         if b is not None:
-            if a > b or b > c or fa > fb or fb > fc:
+            if isclose(fb, fa) or isclose(fb, fc):
+                b, fb = None, None
+            elif a > b or b > c or fa > fb or fb > fc:
                 b, fb = None, None
         msg = 'Finding new point...'
         msg += ' interval is [{0:.2e}, {1:.2e}]'.format(a, c)

@@ -93,8 +93,10 @@ def load_outfile(outfile, hmin, hmax, recalculate=False):
                 
         if hmax < c:
             c, fc = hmax, None
-            
-    logger.info('Initializing from file with a = {0:.2e}, c = {1:.2e}'.format(a, c))
+
+    msg = 'Initializing from file'
+    msg += ' with a = {0:.2e}, c = {1:.2e}'.format(a, c)
+    logger.info(msg)
 
     # check that a < c, and if not, expand the bounds
     if a > c:
@@ -102,7 +104,9 @@ def load_outfile(outfile, hmin, hmax, recalculate=False):
         c *= 2
         fa, fc = None, None
         logger.warning('There is a problem with the specified bounds!')
-        logger.warning('Searching over the interval [{0:.1e}, {1:.1e}]...'.format(a, c))
+        msg = 'Searching over the interval'
+        msg += ' [{0:.1e}, {1:.1e}]...'.format(a, c)
+        logger.warning(msg)
 
     if recalculate:
         fa, fc = None, None
@@ -144,7 +148,8 @@ def compute_x(a, fa, b, fb, c, fc):
     
     # check that all of the values are in the correct order
     if a > c or fa > 0 or fc < 0:
-        msg = 'The root is not contained within the interval [{0:.2e}, {1:.2e}]!'.format(a, c)
+        msg = 'The root is not contained within the interval'
+        msg += ' [{0:.2e}, {1:.2e}]!'.format(a, c)
         logger.error(msg)
         x, xerr = None, None
     
@@ -155,10 +160,12 @@ def compute_x(a, fa, b, fb, c, fc):
         if b is not None:
             if a > b or b > c or fa > fb or fb > fc:
                 b, fb = None, None
-
-        logger.debug('Finding new point... interval is [{0:.2e}, {1:.2e}]'.format(a, c))
+        msg = 'Finding new point...'
+        msg += ' interval is [{0:.2e}, {1:.2e}]'.format(a, c)
+        logger.debug(msg)
     
-        # if only the endpoints of the bracket are defined, perform a bisection search
+        # if only the endpoints of the bracket are defined,
+        # perform a bisection search
         # otherwise use quadratic interpolation
         if b is None:
             x, xerr = bisection(a, fa, c, fc)
@@ -169,8 +176,8 @@ def compute_x(a, fa, b, fb, c, fc):
         else:
             x, xerr = inv_quad_interp(a, fa, b, fb, c, fc)
 
-            # if inverse quadratic interpolation generates a root outside of the bracket,
-            # use linear interpolation instead
+            # if inverse quadratic interpolation generates a root
+            # outside of the bracket, use linear interpolation instead
             if x < a or x > c:
                 if np.sign(fb) == np.sign(fc):
                     x, xerr = linear_interp(a, fa, b, fb)
@@ -180,7 +187,8 @@ def compute_x(a, fa, b, fb, c, fc):
                 msg += ' x = {0:.2e}, xerr = {1:.2e}'.format(x, xerr)
                 logger.debug(msg)
             else:
-                msg = 'Generating new point using inverse quadratic interpolation...'
+                msg = 'Generating new point using'
+                msg += ' inverse quadratic interpolation...'
                 msg += ' x = {0:.2e}, xerr = {1:.2e}'.format(x, xerr)
                 logger.debug(msg)
 
@@ -227,30 +235,39 @@ if __name__ == '__main__':
     
     parser = argparse.ArgumentParser(description='Continuous Gravitational Wave Simulations via Enterprise')
 
-    parser.add_argument('--freq', help='GW frequency for search (DEFAULT: 1e-8)', default=1e-8)
-    parser.add_argument('--hmin', help='Minimum GW strain (DEFAULT: 1e-17)', default=1e-17)
-    parser.add_argument('--hmax', help='Maximum GW strain (DEFAULT: 1e-12)', default=1e-12)
-    parser.add_argument('--htol', help='Fractional error in GW strain (DEFAULT: 0.1)', default=0.1)
-    parser.add_argument('--nreal', help='Number of realizations', default=100)
-    parser.add_argument('--det_prob', help='Detection probability (DEFAULT: 0.95)', default=0.95)
-    parser.add_argument('--fap', help='False alarm probability (DEFAULT: 1e-4)', default=1e-4)
-    parser.add_argument('--datadir', help='Directory of the par and tim files',
-                        default='../data/partim/')
-    parser.add_argument('--endtime', help='Observation end date [MJD]',
-                        default=None)
-    parser.add_argument('--psrlist', help='List of pulsars to use',
-                        default=None)
-    parser.add_argument('--outdir', help='Directory to put the detection curve files', 
-                        default='det_curve/')
-    parser.add_argument('--max_iter', help='Maximum number of iterations to perform', default=10)
+    parser.add_argument('--freq', default=1e-8,
+                        help='GW frequency for search (DEFAULT: 1e-8)')
+    parser.add_argument('--hmin', default=1e-17,
+                        help='Minimum GW strain (DEFAULT: 1e-17)')
+    parser.add_argument('--hmax', default=1e-12,
+                        help='Maximum GW strain (DEFAULT: 1e-12)')
+    parser.add_argument('--htol', default=0.1,
+                        help='Fractional error in GW strain (DEFAULT: 0.1)')
+    parser.add_argument('--nreal', default=100,
+                        help='Number of realizations')
+    parser.add_argument('--det_prob', default=0.95,
+                        help='Detection probability (DEFAULT: 0.95)')
+    parser.add_argument('--fap', default=1e-4,
+                        help='False alarm probability (DEFAULT: 1e-4)')
+    parser.add_argument('--datadir', default='../data/partim/',
+                        help='Directory of the par and tim files')
+    parser.add_argument('--endtime', default=None,
+                        help='Observation end date [MJD]')
+    parser.add_argument('--psrlist', default=None,
+                        help='List of pulsars to use')
+    parser.add_argument('--outdir', default='det_curve/',
+                        help='Directory to put the detection curve files')
+    parser.add_argument('--max_iter', default=10,
+                        help='Maximum number of iterations to perform')
     parser.add_argument('--recalculate', action='store_true', default=False,
                         help='When loading from a file, should I recalculate the detection probabilities?')
     parser.add_argument('--debug', action='store_true', default=False,
-                        help='Sets logger level to DEBUG (otherwise logger level is INFO)')
+                        help='Sets logger level to DEBUG')
 
     args = parser.parse_args()
     
-    # the logging level for __main__ can be either INFO or DEBUG, depending on the arguments
+    # the logging level for __main__ can be either INFO or DEBUG,
+    # depending on the arguments
     if args.debug:
         logger.setLevel(logging.DEBUG)
     else:
@@ -281,24 +298,27 @@ if __name__ == '__main__':
 
     outfile = '{0}/{1}.txt'.format(args.outdir, args.freq)
 
-    # if the outfile exists and is not empty, use the results from a previous run
-    # to define the bounds of the search
+    # if the outfile exists and is not empty, use the results
+    # from a previous run to define the bounds of the search
     # otherwise search over the entire range
     if os.path.isfile(outfile) and os.stat(outfile).st_size > 1:
         logger.info('Resuming from a previous calculation...')
-        a, fa, b, fb, c, fc = load_outfile(outfile, float(args.hmin), float(args.hmax),
-                                           args.recalculate)
+        a, fa, b, fb, c, fc = load_outfile(outfile, float(args.hmin),
+                                           float(args.hmax), args.recalculate)
     else:
         a, c = float(args.hmin), float(args.hmax)
         fa, fc = None, None
         b, fb = None, None
-        logger.info('Searching over the interval [{0:.1e}, {1:.1e}]...'.format(a, c))
+        msg = 'Searching over the interval'
+        msg += ' [{0:.1e}, {1:.1e}]...'.format(a, c)
+        logger.info(msg)
 
     iter = 0
     
     if fa is None:
         fa = cw_sims.compute_det_prob(fgw, a, nreal, fap, datadir,
-                                      endtime=endtime, psrlist=psrlist) - det_prob
+                                      endtime=endtime,
+                                      psrlist=psrlist) - det_prob
         iter += 1
         
         # if fa > 0, try a smaller value for a
@@ -306,7 +326,8 @@ if __name__ == '__main__':
             logger.warning('Adjusting lower bound of interval...')
             a /= 2
             fa = cw_sims.compute_det_prob(fgw, a, nreal, fap, datadir,
-                                          endtime=endtime, psrlist=psrlist) - det_prob
+                                          endtime=endtime,
+                                          psrlist=psrlist) - det_prob
             iter += 1
 
         with open(outfile, 'a') as f:
@@ -314,7 +335,8 @@ if __name__ == '__main__':
 
     if fc is None:
         fc = cw_sims.compute_det_prob(fgw, c, nreal, fap, datadir,
-                                      endtime=endtime, psrlist=psrlist) - det_prob
+                                      endtime=endtime,
+                                      psrlist=psrlist) - det_prob
         iter += 1
 
         # if fc < 0, try a larger value for c
@@ -322,7 +344,8 @@ if __name__ == '__main__':
             logger.warning('Adjusting upper bound of interval...')
             c *= 2
             fc = cw_sims.compute_det_prob(fgw, c, nreal, fap, datadir,
-                                          endtime=endtime, psrlist=psrlist) - det_prob
+                                          endtime=endtime,
+                                          psrlist=psrlist) - det_prob
             iter += 1
 
         with open(outfile, 'a') as f:
@@ -333,7 +356,8 @@ if __name__ == '__main__':
     while x is not None and xerr/x > htol and iter < max_iter:
         
         fx = cw_sims.compute_det_prob(fgw, x, nreal, fap, datadir,
-                                      endtime=endtime, psrlist=psrlist) - det_prob
+                                      endtime=endtime,
+                                      psrlist=psrlist) - det_prob
         iter += 1
 
         with open(outfile, 'a') as f:
@@ -351,7 +375,8 @@ if __name__ == '__main__':
                 logger.warning('Adjusting lower bound of interval...')
                 a /= 2
                 fa = cw_sims.compute_det_prob(fgw, a, nreal, fap, datadir,
-                                              endtime=endtime, psrlist=psrlist) - det_prob
+                                              endtime=endtime,
+                                              psrlist=psrlist) - det_prob
                 iter += 1
                         
                 with open(outfile, 'a') as f:
@@ -361,7 +386,8 @@ if __name__ == '__main__':
                 logger.warning('Adjusting upper bound of interval...')
                 c *= 2
                 fc = cw_sims.compute_det_prob(fgw, c, nreal, fap, datadir,
-                                              endtime=endtime, psrlist=psrlist) - det_prob
+                                              endtime=endtime,
+                                              psrlist=psrlist) - det_prob
                 iter += 1
                         
                 with open(outfile, 'a') as f:
@@ -373,7 +399,8 @@ if __name__ == '__main__':
         logger.error('I could not find the root!')
     else:
         fx = cw_sims.compute_det_prob(fgw, x, nreal, fap, datadir,
-                                      endtime=endtime, psrlist=psrlist) - det_prob
+                                      endtime=endtime,
+                                      psrlist=psrlist) - det_prob
         iter += 1
 
         with open(outfile, 'a') as f:
@@ -381,4 +408,6 @@ if __name__ == '__main__':
 
         logger.info('Search complete.')
         logger.info('{0} iterations were performed.'.format(iter))
-        logger.info('Best estimate for the root: {0:.2e} +/- {1:.2e}'.format(x, xerr))
+        msg = 'Best estimate for the root:'
+        msg += ' {0:.2e} +/- {1:.2e}'.format(x, xerr)
+        logger.info(msg)

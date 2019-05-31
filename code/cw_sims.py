@@ -55,7 +55,8 @@ def filter_by_mjd(psrs, end_time):
 
 def compute_max_chirpmass(log10_fgw, q=1):
     """
-    Function to compute the maximum chirp mass of a SMBHB that can emit at a given GW frequency.
+    Function to compute the maximum chirp mass of a SMBHB that can emit
+    at a given GW frequency.
     The GW frequency cutoff is defined as the frequency at the ISCO (a=0)
     :param fgw: The GW frequency [Hz]
     :param q: The mass ratio (default is q=1)
@@ -63,7 +64,8 @@ def compute_max_chirpmass(log10_fgw, q=1):
     return: log10 of the chirp mass in solar masses
     """
 
-    return -log10_fgw - np.log10(6**(1.5)*np.pi) + 0.6*np.log10(q/(1+q)**2) - np.log10(const.Tsun)
+    return (-log10_fgw - np.log10(6**(1.5)*np.pi)
+            + 0.6*np.log10(q/(1+q)**2) - np.log10(const.Tsun))
 
 
 def make_sim(datadir, fgw, h, endtime=None, psrlist=None):
@@ -80,12 +82,11 @@ def make_sim(datadir, fgw, h, endtime=None, psrlist=None):
     libs_psrs = []
 
     for p,t in zip(parfiles, timfiles):
-        
         if p.split('/')[-1][:-4] in psrlist:
-
             libs_psrs.append(T2.tempopulsar(p, t, maxobs=30000))
 
-    Tmaxyr = np.array([(max(p.toas()) - min(p.toas()))/3.16e7 for p in libs_psrs]).max()
+    Tmaxyr = np.array([(max(p.toas()) - min(p.toas()))/3.16e7
+                       for p in libs_psrs]).max()
 
     # draw parameter values
     gwtheta = np.arccos(np.random.uniform(-1, 1))
@@ -96,7 +97,8 @@ def make_sim(datadir, fgw, h, endtime=None, psrlist=None):
     
     coal = True
     while coal:
-        mc = 10**np.random.uniform(6, min(compute_max_chirpmass(np.log10(fgw)),10))
+        mc_max = min(compute_max_chirpmass(np.log10(fgw)),10)
+        mc = 10**np.random.uniform(6, mc_max)
         tcoal = 2e6 * (mc/1e8)**(-5/3) * (fgw/1e-8)**(-8/3)
         if tcoal > Tmaxyr:
             coal = False
@@ -105,7 +107,8 @@ def make_sim(datadir, fgw, h, endtime=None, psrlist=None):
     dist /= 1.0267e14   # covert distance to Mpc
 
     for lp in libs_psrs:
-        LT.add_cgw(lp, gwtheta, gwphi, mc, dist, fgw, phase0, psi, inc, pdist=1.0, 
+        LT.add_cgw(lp, gwtheta, gwphi, mc, dist, fgw,
+                   phase0, psi, inc, pdist=1.0,
                    pphase=None, psrTerm=True, evolve=False, 
                    phase_approx=True, tref=0)
     
@@ -119,7 +122,8 @@ def make_sim(datadir, fgw, h, endtime=None, psrlist=None):
         psr = Tempo2Pulsar(lp)
 
         # remove any bad toas where the residual is huge
-        res_limit = np.mean(np.abs(psr.residuals)) + 5.*np.std(np.abs(psr.residuals))
+        res_limit = (np.mean(np.abs(psr.residuals))
+                     + 5.*np.std(np.abs(psr.residuals)))
         badtoas = np.argwhere(np.abs(psr.residuals) > res_limit)
 
         if len(badtoas) > 0:
@@ -188,6 +192,6 @@ def compute_det_prob(fgw, h, nreal, fap,
         logger.error('No simulated data sets were generated!')
         return np.inf
     else:
-        msg = 'Computed {0} realizations in {1} s'.format(count, time.time() - t0)
+        msg = 'Computed {0} realizations in {1} s'.format(count, time.time()-t0)
         logger.info(msg)
         return detect/count

@@ -29,11 +29,11 @@ def load_outfile(outfile, hmin, hmax, recalculate=False):
         data = np.array([data])
     
     # remove any points where the detection probability is not finite
-    if np.any(~np.isfinite(data[:,1])):
-        idx = np.where(np.isfinite(data[:,1]))[0]
+    if np.any(~np.isfinite(data[:,2])):
+        idx = np.where(np.isfinite(data[:,2]))[0]
         data = data[idx]
     
-    det_probs = np.unique(data[:,1])
+    det_probs = np.unique(data[:,2])
 
     if len(det_probs) == 1:
         
@@ -42,11 +42,11 @@ def load_outfile(outfile, hmin, hmax, recalculate=False):
         # to define one side of the bracket
         # initialize the other side of the bracket to the default value
 
-        if np.unique(data[:,1])[0] < 0:
+        if np.unique(data[:,2])[0] < 0:
             
             c, fc = hmax, None
             
-            idx = np.where(data[:,1] == det_probs[0])[0]
+            idx = np.where(data[:,2] == det_probs[0])[0]
             if len(idx) > 1:
                 data2 = data[idx]
                 ii = np.where(data2[:,0] == max(data2[:,0]))[0]
@@ -58,7 +58,7 @@ def load_outfile(outfile, hmin, hmax, recalculate=False):
             
             a, fa = hmin, None
 
-            idx = np.where(data[:,1] == det_probs[0])[0]
+            idx = np.where(data[:,2] == det_probs[0])[0]
             if len(idx) > 1:
                 data2 = data[idx]
                 ii = np.where(data2[:,0] == min(data2[:,0]))[0]
@@ -72,7 +72,7 @@ def load_outfile(outfile, hmin, hmax, recalculate=False):
         # find the values of the detection probability that are closest to zero
         # and use the corresponding strain amplitudes to define the bracket
 
-        idx = np.where(data[:,1] < 0)[0]
+        idx = np.where(data[:,2] < 0)[0]
         if len(idx) > 1:
             data2 = data[idx]
             ii = np.where(data2[:,0] == max(data2[:,0]))[0]
@@ -83,7 +83,7 @@ def load_outfile(outfile, hmin, hmax, recalculate=False):
         if hmin > a:
             a, fa = hmin, None
     
-        idx = np.where(data[:,1] > 0)[0]
+        idx = np.where(data[:,2] > 0)[0]
         if len(idx) > 1:
             data2 = data[idx]
             ii = np.where(data2[:,0] == min(data2[:,0]))[0]
@@ -333,7 +333,7 @@ if __name__ == '__main__':
             iter += 1
 
         with open(outfile, 'a') as f:
-            f.write('{0:.2e}  {1:>6.3f}\n'.format(a, fa))
+            f.write('{0:.2e}  {1:.2e}  {2:>6.3f}\n'.format(a, a, fa))
 
     if fc is None:
         fc = cw_sims.compute_det_prob(fgw, c, nreal, fap, datadir,
@@ -351,7 +351,7 @@ if __name__ == '__main__':
             iter += 1
 
         with open(outfile, 'a') as f:
-            f.write('{0:.2e}  {1:>6.3f}\n'.format(c, fc))
+            f.write('{0:.2e}  {1:.2e}  {1:>6.3f}\n'.format(c, c, fc))
 
     x, xerr = compute_x(a, fa, b, fb, c, fc, nreal)
         
@@ -363,7 +363,7 @@ if __name__ == '__main__':
         iter += 1
 
         with open(outfile, 'a') as f:
-            f.write('{0:.2e}  {1:>6.3f}\n'.format(x, fx))
+            f.write('{0:.2e}  {1:.2e}  {2:>6.3f}\n'.format(x, xerr, fx))
 
         # redefine the points a, b, c to incorporate x
         a, fa, b, fb, c, fc = set_new_bounds(a, fa, b, fb, c, fc,
@@ -382,7 +382,7 @@ if __name__ == '__main__':
                 iter += 1
                         
                 with open(outfile, 'a') as f:
-                    f.write('{0:.2e}  {1:>6.3f}\n'.format(a, fa))
+                    f.write('{0:.2e}  {1:.2e}  {2:>6.3f}\n'.format(a, a, fa))
 
             while fc < fb and iter < max_iter:
                 logger.warning('Adjusting upper bound of interval...')
@@ -393,7 +393,7 @@ if __name__ == '__main__':
                 iter += 1
                         
                 with open(outfile, 'a') as f:
-                    f.write('{0:.2e}  {1:>6.3f}\n'.format(c, fc))
+                    f.write('{0:.2e}  {1:.2e}  {2:>6.3f}\n'.format(c, c, fc))
 
         x, xerr = compute_x(a, fa, b, fb, c, fc, nreal)
 
@@ -406,7 +406,7 @@ if __name__ == '__main__':
         iter += 1
 
         with open(outfile, 'a') as f:
-            f.write('{0:.2e}  {1:>6.3f}\n'.format(x, fx))
+            f.write('{0:.2e}  {1:.2e}  {2:>6.3f}\n'.format(x, xerr, fx))
 
         logger.info('Search complete.')
         logger.info('{0} iterations were performed.'.format(iter))

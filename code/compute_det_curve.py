@@ -363,7 +363,7 @@ if __name__ == '__main__':
             iter += 1
 
         with open(outfile, 'a') as f:
-            f.write('{0:.2e}  {1:.2e}  {1:>6.3f}\n'.format(c, c, fc))
+            f.write('{0:.2e}  {1:.2e}  {2:>6.3f}\n'.format(c, c, fc))
 
     x, xerr = compute_x(a, fa, b, fb, c, fc, nreal)
         

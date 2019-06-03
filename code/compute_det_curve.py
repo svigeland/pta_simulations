@@ -249,20 +249,6 @@ if __name__ == '__main__':
     
     parser = argparse.ArgumentParser(description='Continuous Gravitational Wave Simulations')
 
-    parser.add_argument('--freq', default=1e-8,
-                        help='GW frequency for search (DEFAULT: 1e-8)')
-    parser.add_argument('--hmin', default=1e-17,
-                        help='Minimum GW strain (DEFAULT: 1e-17)')
-    parser.add_argument('--hmax', default=1e-12,
-                        help='Maximum GW strain (DEFAULT: 1e-12)')
-    parser.add_argument('--htol', default=0.1,
-                        help='Fractional error in GW strain (DEFAULT: 0.1)')
-    parser.add_argument('--nreal', default=100,
-                        help='Number of realizations')
-    parser.add_argument('--det_prob', default=0.95,
-                        help='Detection probability (DEFAULT: 0.95)')
-    parser.add_argument('--fap', default=1e-4,
-                        help='False alarm probability (DEFAULT: 1e-4)')
     parser.add_argument('--datadir', default='../data/partim/',
                         help='Directory of the par and tim files')
     parser.add_argument('--endtime', default=None,
@@ -271,6 +257,20 @@ if __name__ == '__main__':
                         help='List of pulsars to use')
     parser.add_argument('--outdir', default='det_curve/',
                         help='Directory to put the detection curve files')
+    parser.add_argument('--freq', default=1e-8,
+                        help='GW frequency for search (DEFAULT: 1e-8)')
+    parser.add_argument('--hmin', default=1e-17,
+                        help='Minimum GW strain (DEFAULT: 1e-17)')
+    parser.add_argument('--hmax', default=1e-12,
+                        help='Maximum GW strain (DEFAULT: 1e-12)')
+    parser.add_argument('--htol', default=0.1,
+                        help='Fractional error in GW strain (DEFAULT: 0.1)')
+    parser.add_argument('--det_prob', default=0.95,
+                        help='Detection probability (DEFAULT: 0.95)')
+    parser.add_argument('--fap', default=1e-4,
+                        help='False alarm probability (DEFAULT: 1e-4)')
+    parser.add_argument('--nreal', default=100,
+                        help='Number of realizations')
     parser.add_argument('--max_iter', default=10,
                         help='Maximum number of iterations to perform')
     parser.add_argument('--recalculate', action='store_true', default=False,

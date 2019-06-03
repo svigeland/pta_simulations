@@ -33,6 +33,18 @@ def load_outfile(outfile, hmin, hmax, recalculate=False):
         idx = np.where(np.isfinite(data[:,2]))[0]
         data = data[idx]
     
+    # if the detection probability has been computed more than once
+    # for a given frequency, only use the most recently calculated value
+    freqs = np.unique(data[:,0])
+    idx = []
+    for freq in freqs:
+        i = np.where(data[:,0] == freq)[0]
+        if len(i) > 1:
+            idx.append(int(i[-1]))
+        else:
+            idx.append(int(i))
+    data = data[idx]
+
     det_probs = np.unique(data[:,2])
 
     if len(det_probs) == 1:

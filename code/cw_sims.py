@@ -68,7 +68,8 @@ def compute_max_chirpmass(log10_fgw, q=1):
             + 0.6*np.log10(q/(1+q)**2) - np.log10(const.Tsun))
 
 
-def make_sim(datadir, fgw, h, endtime=None, psrlist=None):
+def make_sim(datadir, fgw, h, endtime=None, psrlist=None, 
+             gwtheta=None, gwphi=None, phase0=None, inc=None, psi=None, mc=None):
 
     #make libstempo pulsar objects
     parfiles = sorted(glob.glob(datadir + '*.par'))
@@ -88,15 +89,21 @@ def make_sim(datadir, fgw, h, endtime=None, psrlist=None):
     Tmaxyr = np.array([(max(p.toas()) - min(p.toas()))/3.16e7
                        for p in libs_psrs]).max()
 
-    # draw parameter values
-    gwtheta = np.arccos(np.random.uniform(-1, 1))
-    gwphi = np.random.uniform(0, 2*np.pi)
-    phase0 = np.random.uniform(0, 2*np.pi)
-    inc = np.arccos(np.random.uniform(-1, 1))
-    psi = np.random.uniform(0, np.pi)
+    # draw parameter values if they are not specified
+    if gwtheta is None:
+        gwtheta = np.arccos(np.random.uniform(-1, 1))
+    if gwphi is None:
+        gwphi = np.random.uniform(0, 2*np.pi)
+    if phase0 is None:
+        phase0 = np.random.uniform(0, 2*np.pi)
+    if inc is None:
+        inc = np.arccos(np.random.uniform(-1, 1))
+    if psi is None:
+        psi = np.random.uniform(0, np.pi)
     
-    mc_max = min(compute_max_chirpmass(np.log10(fgw)),10)
-    mc = 10**np.random.uniform(6, mc_max)
+    if mc is None:
+        mc_max = min(compute_max_chirpmass(np.log10(fgw)),10)
+        mc = 10**np.random.uniform(6, mc_max)
 
     dist = 4 * np.sqrt(2/5) * (mc*4.9e-6)**(5/3) * (np.pi*fgw)**(2/3) / h
     dist /= 1.0267e14   # covert distance to Mpc
@@ -156,7 +163,9 @@ def initialize_pta_sim(psrs, fgw):
 
 
 def compute_det_prob(fgw, h, nreal, fap, 
-                     datadir, endtime=None, psrlist=None):
+                     datadir, endtime=None, psrlist=None, 
+                     gwtheta=None, gwphi=None, phase0=None, 
+                     inc=None, psi=None, mc=None):
 
     count = 0
     detect = 0
@@ -165,7 +174,9 @@ def compute_det_prob(fgw, h, nreal, fap,
     for _ in range(nreal):
 
         try:
-            psrs = make_sim(datadir, fgw, h, endtime=endtime, psrlist=psrlist)
+            psrs = make_sim(datadir, fgw, h, endtime=endtime, psrlist=psrlist, 
+                            gwtheta=gwtheta, gwphi=gwphi, phase0=phase0, 
+                            inc=inc, psi=psi, mc=mc)
         except:
             psrs = []
         

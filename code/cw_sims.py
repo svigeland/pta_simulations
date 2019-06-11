@@ -69,7 +69,8 @@ def compute_max_chirpmass(log10_fgw, q=1):
 
 
 def make_sim(datadir, fgw, h, endtime=None, psrlist=None, 
-             gwtheta=None, gwphi=None, phase0=None, inc=None, psi=None, mc=None):
+             gwtheta=None, gwphi=None, phase0=None, inc=None, psi=None, mc=None,
+             cosgwtheta_range=None, gwphi_range=None):
 
     #make libstempo pulsar objects
     parfiles = sorted(glob.glob(datadir + '*.par'))
@@ -91,9 +92,16 @@ def make_sim(datadir, fgw, h, endtime=None, psrlist=None,
 
     # draw parameter values if they are not specified
     if gwtheta is None:
-        gwtheta = np.arccos(np.random.uniform(-1, 1))
+        if cosgwtheta_range is None:
+            gwtheta = np.arccos(np.random.uniform(-1, 1))
+        else:
+            gwtheta = np.arccos(np.random.uniform(cosgwtheta_range[0],
+                                                  cosgwtheta_range[1]))
     if gwphi is None:
-        gwphi = np.random.uniform(0, 2*np.pi)
+        if gwphi_range is None:
+            gwphi = np.random.uniform(0, 2*np.pi)
+        else:
+            gwphi = np.random.uniform(gwphi_range[0], gwphi_range[1])
     if phase0 is None:
         phase0 = np.random.uniform(0, 2*np.pi)
     if inc is None:
@@ -165,7 +173,8 @@ def initialize_pta_sim(psrs, fgw):
 def compute_det_prob(fgw, h, nreal, fap, 
                      datadir, endtime=None, psrlist=None, 
                      gwtheta=None, gwphi=None, phase0=None, 
-                     inc=None, psi=None, mc=None):
+                     inc=None, psi=None, mc=None,
+                     cosgwtheta_range=None, gwphi_range=None):
 
     count = 0
     detect = 0
@@ -176,7 +185,9 @@ def compute_det_prob(fgw, h, nreal, fap,
         try:
             psrs = make_sim(datadir, fgw, h, endtime=endtime, psrlist=psrlist, 
                             gwtheta=gwtheta, gwphi=gwphi, phase0=phase0, 
-                            inc=inc, psi=psi, mc=mc)
+                            inc=inc, psi=psi, mc=mc,
+                            cosgwtheta_range=cosgwtheta_range,
+                            gwphi_range=gwphi_range)
         except:
             psrs = []
         
